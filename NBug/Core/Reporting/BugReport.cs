@@ -26,6 +26,10 @@ namespace NBug.Core.Reporting
 		/// </summary>
 		internal static event Action<Exception, Report> ProcessingException;
 
+        internal static event Action<Exception, SerializableException, Report> PreDisplayBugReportUI;
+
+        internal static event Action<UIDialogResult, Exception, SerializableException, Report> PostDisplayBugReportUI;
+
 		internal ExecutionFlow Report(Exception exception, ExceptionThread exceptionThread)
 		{
 			try
@@ -43,7 +47,14 @@ namespace NBug.Core.Reporting
 					handler(exception, report);
 				}
 
+                if (PreDisplayBugReportUI != null)
+                    PreDisplayBugReportUI(exception, serializableException, report);
+
 				var uiDialogResult = UISelector.DisplayBugReportUI(exceptionThread, serializableException, report);
+
+                if (PostDisplayBugReportUI != null)
+                    PostDisplayBugReportUI(uiDialogResult, exception, serializableException, report);
+
 				if (uiDialogResult.Report == SendReport.Send)
 				{
 					this.CreateReportZip(serializableException, report);
@@ -186,6 +197,15 @@ namespace NBug.Core.Reporting
 							// ToDo: This needs a lot more work!
 							this.AddAdditionalFiles(zipStorer);
 						}
+
+                        if (report.ProtocolData != null)
+                        {
+                            stream.SetLength(0);
+                            var ser = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                            ser.Serialize(stream, report.ProtocolData);
+                            stream.Position = 0;
+                            zipStorer.AddStream(ZipStorer.Compression.Deflate, StoredItemFile.ProtocolData, stream, DateTime.UtcNow, string.Empty);
+                        }
 					}
 
 					Logger.Trace("Created a new report file. Currently the number of report files queued to be send is: " + Storer.GetReportCount());

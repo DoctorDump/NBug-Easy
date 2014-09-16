@@ -141,6 +141,7 @@ namespace NBug.Core.Submission
 
 		private ExceptionData GetDataFromZip(Stream stream)
 		{
+            object protocolData = null;
 			var results = new ExceptionData();
 			var zipStorer = ZipStorer.Open(stream, FileAccess.Read);
 			using (Stream zipItemStream = new MemoryStream())
@@ -166,8 +167,19 @@ namespace NBug.Core.Submission
 						results.Report = (Report)deserializer.Deserialize(zipItemStream);
 						zipItemStream.Position = 0;
 					}
+                    else if (Path.GetFileName(entry.FilenameInZip) == StoredItemFile.ProtocolData)
+                    {
+                        zipItemStream.SetLength(0);
+                        zipStorer.ExtractFile(entry, zipItemStream);
+                        zipItemStream.Position = 0;
+                        var deserializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                        protocolData = deserializer.Deserialize(zipItemStream);
+                        zipItemStream.Position = 0;
+                    }
 				}
 			}
+
+            results.Report.ProtocolData = protocolData;
 
 			return results;
 		}

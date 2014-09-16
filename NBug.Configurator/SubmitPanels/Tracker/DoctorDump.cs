@@ -26,6 +26,8 @@
                 {
                     ApplicationGUID = AppIdTextBox.Text,
                     Email = EmailTextBox.Text,
+                    SendAnonymousReportSilently = SendAnonymousCheckBox.Checked,
+                    OpenProblemSolutionPage = OpenSolutionCheckBox.Checked
                 };
 
 				return doctorDump.ConnectionString;
@@ -36,6 +38,8 @@
                 var doctorDump = new Core.Submission.Tracker.DoctorDump.DoctorDump(value);
                 this.AppIdTextBox.Text = doctorDump.ApplicationGUID;
                 this.EmailTextBox.Text = doctorDump.Email;
+                this.SendAnonymousCheckBox.Checked = doctorDump.SendAnonymousReportSilently;
+                this.OpenSolutionCheckBox.Checked = doctorDump.OpenProblemSolutionPage;
 			}
 		}
 
